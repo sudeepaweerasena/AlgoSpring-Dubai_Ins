@@ -3,6 +3,7 @@ import datetime
 import time
 from datetime import datetime  
 import pandas as pd
+from convert_excel import nlg_transfer_medical_data
 
 
 class Dubai_Ins:
@@ -18,6 +19,8 @@ class Dubai_Ins:
     
 
     async def fill_company_information(self):
+        # Convert Census Data file
+        nlg_transfer_medical_data()
 
         # Click 'SME' button
         await self.page.locator("iframe[name=\"content\"]").content_frame.get_by_role("button", name="SME Quotation").click()

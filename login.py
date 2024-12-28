@@ -1,11 +1,9 @@
 import undetected_playwright as playwright
-from PIL import Image, ImageEnhance
-import pytesseract
 import time
 import io
 import asyncio
-
-pytesseract.pytesseract.tesseract_cmd = r'C:\Users\sudeepa.w\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
+from twocaptcha import TwoCaptcha
+import aiofiles
 
 
 class Login:
@@ -25,20 +23,21 @@ class Login:
                 await self.page.locator("#txt_uname").fill(username)
                 await self.page.locator("#txt_pwd").fill(password)
 
-                # Take screenshot of the CAPTCHA image with a longer timeout
-                captcha_image = await self.page.locator("div.col-sm-6 img").screenshot()
+                captcha_image = await self.page.locator("#img").screenshot()
 
-                # Preprocess image before OCR
-                image = Image.open(io.BytesIO(captcha_image))
-                image = image.convert('L')  # Convert to grayscale
-                enhancer = ImageEnhance.Contrast(image)
-                image = enhancer.enhance(2)  # Increase the contrast
+                # Asynchronously write the screenshot to a file
+                async with aiofiles.open('captcha.png', 'wb') as file:
+                    await file.write(captcha_image)
 
-                captcha_text = pytesseract.image_to_string(image)
-                print("CAPTCHA is:", captcha_text.strip())
+                # Initialize TwoCaptcha solver
+                solver = TwoCaptcha('12054431ec2fc8637b7ca76cd31c9401')
 
+                # Solve the CAPTCHA using the file
+                result = await asyncio.to_thread(solver.normal, 'captcha.png')
+                captcha_code = result['code']
+                print("Captcha Code :", captcha_code)
                 # Fill in the CAPTCHA text
-                await self.page.locator("#txt_captcha").fill(captcha_text.strip())
+                await self.page.locator("#txt_captcha").fill(captcha_code)
 
                 # Wait for the button to be clickable
                 # await self.page.locator("#btn_signin").wait_for(state="visible")
